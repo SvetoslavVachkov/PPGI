@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <title>1. StudentCard</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+    function StudentCard({ name, grade, averageScore }) {
+      const initials = name.split(" ").map(n => n[0]).join("");
+      return (
+        <div style={{
+          border: "1px solid #ccc",
+          borderRadius: 8,
+          padding: 16,
+          margin: 8,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          maxWidth: 300
+        }}>
+          <div style={{
+            width: 48,
+            height: 48,
+            borderRadius: "50%",
+            background: "#4a90d9",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: "bold"
+          }}>
+            {initials}
+          </div>
+          <div>
+            <div style={{ fontWeight: "bold" }}>{name}</div>
+            <div style={{ fontSize: 14, color: "#666" }}>
+              Клас: {grade} | Успех: {averageScore}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div>
+          <StudentCard name="Иван Петров" grade="11Б" averageScore={5.67} />
+          <StudentCard name="Мария Иванова" grade="11А" averageScore={5.92} />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

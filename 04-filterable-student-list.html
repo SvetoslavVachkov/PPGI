@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <title>4. Filterable Student List</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+    const { useState } = React;
+
+    function SearchInput({ value, onChange }) {
+      return (
+        <input
+          type="text"
+          placeholder="Търсене по име..."
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          style={{ padding: 8, marginBottom: 12, width: 300 }}
+        />
+      );
+    }
+
+    function StudentItem({ student }) {
+      return (
+        <div style={{
+          padding: 12,
+          border: "1px solid #ccc",
+          marginBottom: 4
+        }}>
+          {student.name} – {student.grade}
+        </div>
+      );
+    }
+
+    function FilterableStudentList() {
+      const [query, setQuery] = useState("");
+      const students = [
+        { id: 1, name: "Иван Петров", grade: "11А" },
+        { id: 2, name: "Мария Иванова", grade: "11Б" },
+        { id: 3, name: "Петър Георгиев", grade: "11А" },
+        { id: 4, name: "Анна Димитрова", grade: "11Б" }
+      ];
+      const filtered = students.filter(s =>
+        s.name.toLowerCase().includes(query.toLowerCase())
+      );
+      return (
+        <div>
+          <SearchInput value={query} onChange={setQuery} />
+          {filtered.length === 0 ? (
+            <p>Няма намерени ученици</p>
+          ) : (
+            filtered.map(s => <StudentItem key={s.id} student={s} />)
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<FilterableStudentList />);
+  </script>
+</body>
+</html>

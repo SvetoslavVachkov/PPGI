@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <title>6. Mini Classroom</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+    const { useState } = React;
+
+    function AddStudentForm({ onAdd }) {
+      const [name, setName] = useState("");
+      const [grade, setGrade] = useState("");
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (name.trim() && grade.trim()) {
+          onAdd({ name: name.trim(), grade: grade.trim() });
+          setName("");
+          setGrade("");
+        }
+      };
+      return (
+        <form onSubmit={handleSubmit} style={{ marginBottom: 20 }}>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Име"
+            style={{ marginRight: 8, padding: 8 }}
+          />
+          <input
+            value={grade}
+            onChange={(e) => setGrade(e.target.value)}
+            placeholder="Клас"
+            style={{ marginRight: 8, padding: 8 }}
+          />
+          <button type="submit">Добави</button>
+        </form>
+      );
+    }
+
+    function GradeModal({ children }) {
+      return (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}>
+          <div style={{
+            background: "white",
+            padding: 24,
+            borderRadius: 8,
+            minWidth: 300
+          }}>
+            {children}
+          </div>
+        </div>
+      );
+    }
+
+    function StudentRow({ student, onGrade, onDelete }) {
+      const [showModal, setShowModal] = useState(false);
+      const [gradeInput, setGradeInput] = useState("");
+      const avg = student.scores.length
+        ? (student.scores.reduce((a, b) => a + b, 0) / student.scores.length).toFixed(2)
+        : "-";
+      const handleSubmit = () => {
+        const g = parseFloat(gradeInput);
+        if (g >= 2 && g <= 6) {
+          onGrade(student.id, g);
+          setGradeInput("");
+          setShowModal(false);
+        }
+      };
+      return (
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: 12,
+          border: "1px solid #ccc",
+          marginBottom: 4
+        }}>
+          <div>
+            <strong>{student.name}</strong> – {student.grade} (ср. {avg})
+          </div>
+          <div>
+            <button onClick={() => setShowModal(true)} style={{ marginRight: 8 }}>
+              Постави оценка
+            </button>
+            <button onClick={() => onDelete(student.id)}>Изтрий</button>
+          </div>
+          {showModal && (
+            <GradeModal>
+              <h3>Оценка за {student.name}</h3>
+              <input
+                type="number"
+                min={2}
+                max={6}
+                step={0.25}
+                value={gradeInput}
+                onChange={(e) => setGradeInput(e.target.value)}
+                style={{ width: "100%", padding: 8, margin: "12px 0" }}
+              />
+              <div>
+                <button onClick={handleSubmit} style={{ marginRight: 8 }}>Запази</button>
+                <button onClick={() => setShowModal(false)}>Отказ</button>
+              </div>
+            </GradeModal>
+          )}
+        </div>
+      );
+    }
+
+    function ClassStats({ students }) {
+      const allScores = students.flatMap(s => s.scores);
+      const count = students.length;
+      const avg = allScores.length
+        ? (allScores.reduce((a, b) => a + b, 0) / allScores.length).toFixed(2)
+        : "-";
+      const max = allScores.length ? Math.max(...allScores) : "-";
+      const min = allScores.length ? Math.min(...allScores) : "-";
+      return (
+        <div style={{
+          marginTop: 20,
+          padding: 16,
+          background: "#f5f5f5",
+          borderRadius: 8
+        }}>
+          <h3>Статистики</h3>
+          <p>Ученици: {count}</p>
+          <p>Среден успех: {avg}</p>
+          <p>Най-висока: {max}</p>
+          <p>Най-ниска: {min}</p>
+        </div>
+      );
+    }
+
+    function Classroom() {
+      const [students, setStudents] = useState([]);
+      const nextId = React.useRef(1);
+      const addStudent = (data) => {
+        setStudents(prev => [...prev, {
+          id: nextId.current++,
+          name: data.name,
+          grade: data.grade,
+          scores: []
+        }]);
+      };
+      const addGrade = (id, score) => {
+        setStudents(prev => prev.map(s =>
+          s.id === id ? { ...s, scores: [...s.scores, score] } : s
+        ));
+      };
+      const deleteStudent = (id) => {
+        setStudents(prev => prev.filter(s => s.id !== id));
+      };
+      const sorted = [...students].sort((a, b) => {
+        const avgA = a.scores.length ? a.scores.reduce((x, y) => x + y, 0) / a.scores.length : 0;
+        const avgB = b.scores.length ? b.scores.reduce((x, y) => x + y, 0) / b.scores.length : 0;
+        return avgB - avgA;
+      });
+      return (
+        <div>
+          <AddStudentForm onAdd={addStudent} />
+          {sorted.map(s => (
+            <StudentRow
+              key={s.id}
+              student={s}
+              onGrade={addGrade}
+              onDelete={deleteStudent}
+            />
+          ))}
+          <ClassStats students={students} />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<Classroom />);
+  </script>
+</body>
+</html>

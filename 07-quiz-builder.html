@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <title>7. Quiz Builder</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+    const { useState } = React;
+
+    function QuizHeader({ title, onChange, isPreview }) {
+      if (isPreview) {
+        return <h1>{title}</h1>;
+      }
+      return (
+        <input
+          value={title}
+          onChange={(e) => onChange(e.target.value)}
+          style={{ fontSize: 24, padding: 8, marginBottom: 16, width: "100%" }}
+        />
+      );
+    }
+
+    function QuestionEditor({ question, onUpdate, onDelete }) {
+      const updateText = (text) => {
+        onUpdate({ ...question, text });
+      };
+      const addOption = () => {
+        if (question.options.length >= 6) return;
+        onUpdate({ ...question, options: [...question.options, ""] });
+      };
+      const updateOption = (index, value) => {
+        const opts = [...question.options];
+        opts[index] = value;
+        onUpdate({ ...question, options: opts });
+      };
+      const removeOption = (index) => {
+        const opts = question.options.filter((_, i) => i !== index);
+        const correct = question.correctIndexes.filter(i => i < opts.length);
+        onUpdate({ ...question, options: opts, correctIndexes: correct });
+      };
+      const toggleCorrect = (index) => {
+        const has = question.correctIndexes.includes(index);
+        const correct = has
+          ? question.correctIndexes.filter(i => i !== index)
+          : [...question.correctIndexes, index];
+        onUpdate({ ...question, correctIndexes: correct });
+      };
+      return (
+        <div style={{ border: "1px solid #ccc", padding: 16, marginBottom: 16 }}>
+          <input
+            value={question.text}
+            onChange={(e) => updateText(e.target.value)}
+            placeholder="Текст на въпроса"
+            style={{ width: "100%", padding: 8, marginBottom: 12 }}
+          />
+          {question.options.map((opt, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+              <input
+                type="checkbox"
+                checked={question.correctIndexes.includes(i)}
+                onChange={() => toggleCorrect(i)}
+              />
+              <input
+                value={opt}
+                onChange={(e) => updateOption(i, e.target.value)}
+                style={{ flex: 1, marginLeft: 8, padding: 6 }}
+              />
+              <button onClick={() => removeOption(i)} style={{ marginLeft: 8 }}>Изтрий</button>
+            </div>
+          ))}
+          {question.options.length < 6 && (
+            <button onClick={addOption} style={{ marginTop: 8 }}>+ Добави отговор</button>
+          )}
+          <button onClick={() => onDelete(question.id)} style={{ marginLeft: 12 }}>Изтрий въпрос</button>
+        </div>
+      );
+    }
+
+    function QuestionPreview({ question, selected, onChange, checked }) {
+      return (
+        <div style={{ border: "1px solid #ccc", padding: 16, marginBottom: 16 }}>
+          <p style={{ fontWeight: "bold" }}>{question.text}</p>
+          {question.options.map((opt, i) => {
+            const isSelected = selected.includes(i);
+            const isCorrect = question.correctIndexes.includes(i);
+            let feedback = null;
+            let color = "inherit";
+            if (checked) {
+              if (isSelected && isCorrect) {
+                feedback = " (правилно)";
+                color = "#16a34a";
+              } else if (isSelected && !isCorrect) {
+                feedback = " (грешно)";
+                color = "#dc2626";
+              } else if (!isSelected && isCorrect) {
+                feedback = " (пропуснат)";
+                color = "#dc2626";
+              }
+            }
+            return (
+              <label key={i} style={{ display: "block", marginBottom: 4, color }}>
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => !checked && onChange(i)}
+                  disabled={checked}
+                />
+                {opt}
+                {feedback}
+              </label>
+            );
+          })}
+        </div>
+      );
+    }
+
+    function QuizStats({ questions }) {
+      const totalOptions = questions.reduce((acc, q) => acc + q.options.length, 0);
+      const noCorrect = questions.filter(q => q.correctIndexes.length === 0).length;
+      return (
+        <div style={{ marginTop: 16, padding: 12, background: "#f5f5f5" }}>
+          <p>Въпроси: {questions.length}</p>
+          <p>Общо отговори: {totalOptions}</p>
+          <p>Без правилен отговор: {noCorrect}</p>
+        </div>
+      );
+    }
+
+    function QuizBuilder() {
+      const [mode, setMode] = useState("edit");
+      const [title, setTitle] = useState("Нов тест");
+      const [questions, setQuestions] = useState([]);
+      const [answers, setAnswers] = useState({});
+      const [checked, setChecked] = useState(false);
+      const nextId = React.useRef(1);
+
+      const addQuestion = () => {
+        setQuestions(prev => [...prev, {
+          id: nextId.current++,
+          text: "",
+          options: [],
+          correctIndexes: []
+        }]);
+      };
+      const updateQuestion = (updated) => {
+        setQuestions(prev => prev.map(q => q.id === updated.id ? updated : q));
+      };
+      const deleteQuestion = (id) => {
+        setQuestions(prev => prev.filter(q => q.id !== id));
+      };
+
+      const toggleAnswer = (qId, optIndex) => {
+        setAnswers(prev => {
+          const arr = prev[qId] || [];
+          const has = arr.includes(optIndex);
+          const next = has ? arr.filter(i => i !== optIndex) : [...arr, optIndex];
+          return { ...prev, [qId]: next };
+        });
+      };
+
+      const switchMode = () => {
+        if (mode === "edit") {
+          setAnswers({});
+          setChecked(false);
+        }
+        setMode(mode === "edit" ? "preview" : "edit");
+      };
+
+      return (
+        <div>
+          <button
+            onClick={switchMode}
+            style={{ marginBottom: 16 }}
+          >
+            {mode === "edit" ? "Преглед" : "Редактиране"}
+          </button>
+          <QuizHeader title={title} onChange={setTitle} isPreview={mode === "preview"} />
+          {questions.map(q =>
+            mode === "edit" ? (
+              <QuestionEditor
+                key={q.id}
+                question={q}
+                onUpdate={updateQuestion}
+                onDelete={deleteQuestion}
+              />
+            ) : (
+              <QuestionPreview
+                key={q.id}
+                question={q}
+                selected={answers[q.id] || []}
+                onChange={(i) => toggleAnswer(q.id, i)}
+                checked={checked}
+              />
+            )
+          )}
+          {mode === "edit" && (
+            <button onClick={addQuestion}>+ Нов въпрос</button>
+          )}
+          {mode === "preview" && questions.length > 0 && !checked && (
+            <button onClick={() => setChecked(true)} style={{ marginTop: 16 }}>Провери</button>
+          )}
+          <QuizStats questions={questions} />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<QuizBuilder />);
+  </script>
+</body>
+</html>

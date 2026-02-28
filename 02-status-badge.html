@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <title>2. StatusBadge</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+    function StatusBadge({ status, label }) {
+      const config = {
+        online: { color: "#22c55e", text: "На линия" },
+        away: { color: "#eab308", text: "Отсъства" },
+        offline: { color: "#9ca3af", text: "Офлайн" }
+      };
+      const { color, text } = config[status] || config.offline;
+      const displayText = label ? `${label} - ${text}` : text;
+      return (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, margin: 8 }}>
+          <div style={{
+            width: 12,
+            height: 12,
+            borderRadius: "50%",
+            backgroundColor: color
+          }} />
+          <span>{displayText}</span>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div>
+          <StatusBadge status="online" />
+          <StatusBadge status="away" />
+          <StatusBadge status="offline" />
+          <StatusBadge status="online" label="Иван" />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <title>3. Accordion</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+    const { useState } = React;
+
+    function AccordionItem({ title, children, isOpen, onToggle }) {
+      return (
+        <div style={{ border: "1px solid #ccc", marginBottom: 4 }}>
+          <button
+            onClick={onToggle}
+            style={{
+              width: "100%",
+              padding: 12,
+              textAlign: "left",
+              background: isOpen ? "#f0f0f0" : "#fff",
+              border: "none",
+              cursor: "pointer",
+              fontWeight: "bold"
+            }}
+          >
+            {title}
+          </button>
+          {isOpen && (
+            <div style={{ padding: 12, borderTop: "1px solid #ccc" }}>
+              {children}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function Accordion({ children }) {
+      const [openIndex, setOpenIndex] = useState(null);
+      const items = React.Children.toArray(children);
+      return (
+        <div style={{ maxWidth: 500 }}>
+          {items.map((item, index) => (
+            <AccordionItem
+              key={index}
+              title={item.props.title}
+              isOpen={openIndex === index}
+              onToggle={() => setOpenIndex(openIndex === index ? null : index)}
+            >
+              {item.props.children}
+            </AccordionItem>
+          ))}
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <Accordion>
+          <AccordionItem title="Какво е React?">
+            <p>React е JavaScript библиотека за изграждане на потребителски интерфейси.</p>
+          </AccordionItem>
+          <AccordionItem title="Какво е компонент?">
+            <p>Компонентът е преизползваем блок от UI.</p>
+          </AccordionItem>
+          <AccordionItem title="Какво е JSX?">
+            <p>JSX е синтактично разширение.</p>
+          </AccordionItem>
+        </Accordion>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
